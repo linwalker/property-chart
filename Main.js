@@ -1,5 +1,6 @@
 import React from 'react';
-import { Row, Col, Table, Form, Input, Button } from 'antd';
+import { Row, Col, Table, Form, Input, Button, InputNumber } from 'antd';
+import './Main.css';
 const FormItem = Form.Item;
 const formItemLayout = {
   labelCol: {
@@ -30,67 +31,66 @@ const property_columns = [
   { title: '利率', dataIndex: 'interest', key: 'interest' },
   { title: '投资期限', dataIndex: 'time', key: 'time' },
 ]
-const data = [
-  { name: '有金所', num: 7000, interest: '7.5%', time: '2017-10-12', earn: 262.5 },
-  { name: '苏宁金融', num: 5154.76, interest: '4.4%', time: '--', earn: '--' },
-  { name: '网商银行', num: 10252.32, interest: '4.1%', time: '--', earn: '--' },
-  { name: '微众银行', num: 18732.2, interest: '4.3%', time: '--', earn: '--' },
-  { name: '点融网', num: 6000, interest: '7%', time: '--', earn: '--' },
-  { name: '基金', num: 2284.73, interest: '--', time: '--', earn: '--' },
-  { name: '微众金', num: 1328.54, interest: '--', time: '--', earn: '--' },
-];
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       finance: []
     }
+    this.chart1 = null;
   }
   renderChart = () => {
-    var G2 = require('g2');
-    var Stat = G2.Stat;
-    var chart = new G2.Chart({
-      id: 'chart',
-      forceFit: true,
-      height: 450
-    });
-    if (!this.state.finance) {
+    const G2 = require('g2');
+    const Stat = G2.Stat;
+    if (this.chart1) {
+      this.chart1.clear()
+    } else {
+      this.chart1 = new G2.Chart({
+        id: 'chart',
+        forceFit: true,
+        height: 450
+      });
+    }
+
+    const data = this.state.finance;
+    console.log(data);
+    if (!data) {
       return;
     }
-    chart.source(this.state.finance);
+    this.chart1.source(data);
     // 重要：绘制饼图时，必须声明 theta 坐标系
-    chart.coord('theta', {
+    this.chart1.coord('theta', {
       radius: 0.8 // 设置饼图的大小
     });
-    chart.legend('name', {
+    this.chart1.legend('name', {
       position: 'bottom',
       itemWrap: true,
       formatter: function (val) {
-        for (var i = 0, len = data.length; i < len; i++) {
-          var obj = data[i];
+        for (let i = 0, len = data.length; i < len; i++) {
+          const obj = data[i];
           if (obj.name === val) {
             return val + ': ' + obj.value;
           }
         }
       }
     });
-    chart.tooltip({
+    this.chart1.tooltip({
       title: null,
       map: {
         value: 'num'
       }
     });
-    chart.intervalStack()
+    this.chart1.intervalStack()
       .position(Stat.summary.percent('num'))
       .color('name')
       .label('name*..percent', function (name, percent) {
         percent = (percent * 100).toFixed(2) + '%';
         return name + ' ' + percent;
       });
-    chart.render();
+    this.chart1.render();
     // 设置默认选中
-    var geom = chart.getGeoms()[0]; // 获取所有的图形
-    var items = geom.getData(); // 获取图形对应的数据
+    const geom = this.chart1.getGeoms()[0]; // 获取所有的图形
+    const items = geom.getData(); // 获取图形对应的数据
     geom.setSelected(items[1]); // 设置选中
   }
   handleSubmit = (e) => {
@@ -101,26 +101,37 @@ class App extends React.Component {
         const finance = this.state.finance;
         finance.push(values);
         this.setState({
-          finance:  finance
+          finance: finance
         })
-        console.log(this.state.finance)
+        console.log(this.state.finance);
+        this.renderChart()
       }
     });
   }
   componentDidMount() {
+    console.log('componentDidMount')
+    this.renderChart();
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log('shouldComponentUpdate');
+    console.log('this.state', this.state);
+    console.log('nextState', nextState);
+    return true;
+  }
+  componentWillUpdate() {
+    console.log('componentWillUpdate')
     this.renderChart();
   }
   render() {
     const { getFieldDecorator } = this.props.form;
     const { finance } = this.state;
-    console.log(this.state);
-    console.log(finance)
+    console.log('render');
     return (
       <div>
         <div className="gutter-example">
           <Row gutter={16}>
             <Col className="gutter-row" span={12}>
-              <h3>来，少年，输入你的理财项目！</h3>
+              <h3 className="inputTitle">来，少年，输入你的理财项目！</h3>
               <Form onSubmit={this.handleSubmit}>
                 <FormItem
                   {...formItemLayout}
@@ -139,9 +150,9 @@ class App extends React.Component {
                   label="投资额"
                 >
                   {getFieldDecorator('num', {
-                    rules: [{
-                      required: true, message: '请输入理财资金!',
-                    }],
+                    rules: [
+                      { required: true, message: '请输入投资额!' },
+                    ],
                   })(
                     <Input />
                     )}
@@ -151,9 +162,9 @@ class App extends React.Component {
                   label="利率"
                 >
                   {getFieldDecorator('interest', {
-                    rules: [{
-                      required: true, message: '请输入收益率!',
-                    }],
+                    rules: [
+                      { required: true, message: '请输入利率!' },
+                    ],
                   })(
                     <Input />
                     )}
@@ -162,9 +173,10 @@ class App extends React.Component {
                   {...formItemLayout}
                   label="投资期限"
                 >
-                  {getFieldDecorator('time')(
-                    <Input />
+                  {getFieldDecorator('time', { initialValue: 12 })(
+                    <InputNumber min={1} max={120} />
                   )}
+                  <span className="ant-form-text"> 个月</span>
                 </FormItem>
                 <FormItem {...tailFormItemLayout}>
                   <Button type="primary" htmlType="submit">保存</Button>
@@ -172,8 +184,12 @@ class App extends React.Component {
               </Form>
             </Col>
             <Col className="gutter-row" span={12}>
+              <h3 className="inputTitle">资产情况</h3>
+              <Table
+                dataSource={finance}
+                columns={property_columns}
+                paginatio={false} />
               <div id="chart"></div>
-              <Table dataSource={finance} columns={property_columns} paginatio={false} />
             </Col>
           </Row>
         </div>
