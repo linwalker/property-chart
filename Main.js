@@ -2,6 +2,13 @@ import React from 'react';
 import { Row, Col, Table, Form, Input, Button, InputNumber } from 'antd';
 import './Main.css';
 const FormItem = Form.Item;
+const initialData = [
+  {name: "有金所", num: 7000, interest: "0.075", time: 6},
+  {name: "易付宝", num: 5164, interest: "0.044", time: 6},
+  {name: "网商银行", num: 10270, interest: "0.041", time: 12},
+  {name: "微众银行", num: 14060, interest: "0.043", time: 12},
+  {name: "点融网", num: 6154, interest: "0.076", time: 12}
+]
 const formItemLayout = {
   labelCol: {
     xs: { span: 24 },
@@ -27,9 +34,15 @@ const tailFormItemLayout = {
 
 const property_columns = [
   { title: '项目', dataIndex: 'name', key: 'name' },
-  { title: '投资额', dataIndex: 'num', key: 'num' },
+  { title: '投资额(元)', dataIndex: 'num', key: 'num' },
   { title: '利率', dataIndex: 'interest', key: 'interest' },
-  { title: '投资期限', dataIndex: 'time', key: 'time' },
+  { title: '投资期限(月)', dataIndex: 'time', key: 'time' },
+  { title: '预期收益(元)', dataIndex: '', key: '', render(data,row) {
+    const money = parseFloat(row.num)*parseFloat(row.interest)*parseFloat(row.time)/12;
+    return <div>
+      {money.toFixed(2)}
+    </div>
+  }}
 ]
 class App extends React.Component {
   constructor(props) {
@@ -53,6 +66,10 @@ class App extends React.Component {
     }
 
     const data = this.state.finance;
+    data.map((item) => {
+      item.num = parseFloat(item.num);
+      return item;
+    })
     console.log(data);
     if (!data) {
       return;
@@ -69,17 +86,14 @@ class App extends React.Component {
         for (let i = 0, len = data.length; i < len; i++) {
           const obj = data[i];
           if (obj.name === val) {
-            return val + ': ' + obj.value;
+            return val + ': ' + obj.num;
           }
         }
       }
     });
     this.chart1.tooltip({
-      title: null,
-      map: {
-        value: 'num'
-      }
-    });
+      title: null
+    })
     this.chart1.intervalStack()
       .position(Stat.summary.percent('num'))
       .color('name')
@@ -104,7 +118,8 @@ class App extends React.Component {
           finance: finance
         })
         console.log(this.state.finance);
-        this.renderChart()
+        this.renderChart();
+        this.props.form.resetFields();
       }
     });
   }
@@ -120,7 +135,6 @@ class App extends React.Component {
   }
   componentWillUpdate() {
     console.log('componentWillUpdate')
-    this.renderChart();
   }
   render() {
     const { getFieldDecorator } = this.props.form;
@@ -142,7 +156,7 @@ class App extends React.Component {
                       required: true, message: '请输入理财项目!',
                     }],
                   })(
-                    <Input />
+                    <Input placeholder="例如: 支付宝"/>
                     )}
                 </FormItem>
                 <FormItem
@@ -154,7 +168,7 @@ class App extends React.Component {
                       { required: true, message: '请输入投资额!' },
                     ],
                   })(
-                    <Input />
+                    <Input placeholder="例如: 10000"/>
                     )}
                 </FormItem>
                 <FormItem
@@ -166,7 +180,7 @@ class App extends React.Component {
                       { required: true, message: '请输入利率!' },
                     ],
                   })(
-                    <Input />
+                    <Input placeholder="例如: 0.03"/>
                     )}
                 </FormItem>
                 <FormItem
