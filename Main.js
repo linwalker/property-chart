@@ -1,6 +1,7 @@
 import React from 'react';
 import { Row, Col, Table, Form, Input, Button, InputNumber } from 'antd';
 import './Main.css';
+import G2 from 'g2';
 const FormItem = Form.Item;
 const initialData = [
   {name: "有金所", num: 7000, interest: "0.075", time: 6},
@@ -53,7 +54,7 @@ class App extends React.Component {
     this.chart1 = null;
   }
   renderChart = () => {
-    const G2 = require('g2');
+    // const G2 = require('g2');
     const Stat = G2.Stat;
     if (this.chart1) {
       this.chart1.clear()
@@ -106,6 +107,43 @@ class App extends React.Component {
     const geom = this.chart1.getGeoms()[0]; // 获取所有的图形
     const items = geom.getData(); // 获取图形对应的数据
     geom.setSelected(items[1]); // 设置选中
+
+    var data_1 = [
+        {time: "周一", tem: 6.9, rain: 10},
+        {time: "周二", tem: 9.5, rain: 13},
+        {time: "周三", tem: 14.5, rain: 14},
+        {time: "周四", tem: 18.2, rain: 10},
+        {time: "周五", tem: 21.5, rain: 12},
+        {time: "周六", tem: 25.2, rain: 16},
+        {time: "周日", tem: 26.5, rain: 13},
+      ];
+      const linechart = new G2.Chart({
+        id: 'c1',
+        forceFit: true,
+        height: 400,
+      });
+
+      linechart.source(data_1);
+      linechart.axis('time', {
+        label:{
+          fontSize: 20 
+        },
+        grid: null
+      });
+      linechart.axis('tem', {
+        label:{
+          fontSize: 20
+        }
+      });
+      linechart.axis('rain', {
+        label:{
+          fontSize: 20 
+        }
+      });
+      linechart.interval().position('time*tem');
+      linechart.line().position('time*rain').color('#E67E22').size(2).shape('smooth'); // 绘制曲线图
+      linechart.point().position('time*rain').color('#E67E22'); // 绘制点图
+      linechart.render();
   }
   handleSubmit = (e) => {
     e.preventDefault();
